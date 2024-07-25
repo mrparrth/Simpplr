@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form with Objectives</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+        <!-- Objectives container -->
+        <div id="objectives-container">
+            <input type="text" class="w-full p-2 mb-2 border border-gray-300 rounded" placeholder="Objective 1">
+            <input type="text" class="w-full p-2 mb-2 border border-gray-300 rounded" placeholder="Objective 2">
+            <input type="text" class="w-full p-2 mb-2 border border-gray-300 rounded" placeholder="Objective 3">
+            <input type="text" class="w-full p-2 mb-2 border border-gray-300 rounded" placeholder="Objective 4">
+            <input type="text" class="w-full p-2 mb-2 border border-gray-300 rounded" placeholder="Objective 5">
+        </div>
+        <!-- Add Objective button -->
+        <div class="mb-2 flex items-center justify-center">
+            <button id="addObjectiveButton" class="flex items-center text-blue-500">
+                <span class="text-2xl">+</span>
+                <span class="ml-2">Add Objective</span>
+            </button>
+        </div>
+        <!-- Save and Close / Cancel buttons -->
+        <div class="flex justify-between">
+            <button class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600" id="cancel">Cancel</button>
+            <button class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" id="save">Save and Close</button>
+        </div>
+    </div>
+    <script>
+
+        document.getElementById('addObjectiveButton').addEventListener('click', function () {
+            const container = document.getElementById('objectives-container');
+            const newInput = document.createElement('input');
+            newInput.type = 'text';
+            newInput.className = 'w-full p-2 mb-2 border border-gray-300 rounded';
+            newInput.placeholder = `Objective ${container.children.length + 1}`;
+            container.appendChild(newInput);
+        });
+
+        document.getElementById('cancel').addEventListener('click', function () {
+            console.log('cancel')
+        });
+
+        document.getElementById('save').addEventListener('click', function () {
+            const objectives = [];
+            const inputs = document.querySelectorAll('#objectives-container input');
+            inputs.forEach(input => {
+                if (input.value)
+                    objectives.push(input.value);
+            });
+            console.log(objectives);
+        });
+    </script>
+</body>
+
+</html>
