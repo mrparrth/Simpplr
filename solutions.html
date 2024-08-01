@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KPIs Layout</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"/>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+    }
+
+    .separator {
+      display: flex;
+      align-items: center;
+      text-align: center;
+      margin: 1rem 0;
+    }
+
+    .separator::before,
+    .separator::after {
+      content: "";
+      flex: 1;
+      border-block-end: 1px solid #d1d5db;
+      /* Tailwind gray-300 */
+    }
+
+    .separator::before {
+      margin-inline-end: 0.25em;
+    }
+
+    .separator::after {
+      margin-inline-start: 0.25em;
+    }
+
+    .icon {
+      cursor: pointer;
+      font-weight: bold;
+      margin-inline-start: 0.5rem;
+    }
+
+    .overlay {
+      position: fixed;
+      inset-block-start: 0;
+      inset-inline-start: 0;
+      inline-size: 100%;
+      block-size: 100%;
+      background-color: rgb(231 242 233 / 50%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s, visibility 0.3s;
+    }
+
+    .overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .spinner {
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      border-block-start-color: #368b2c;
+      border-radius: 50%;
+      inline-size: 40px;
+      block-size: 40px;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .swal2-custom-input,
+    .swal2-custom-textarea,
+    .swal2-custom-select {
+      inline-size: 100%;
+      box-sizing: border-box;
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #dcdcdc;
+      font-size: 16px;
+    }
+
+    .swal2-custom-textarea {
+      block-size: 100px;
+      /* Adjust as needed */
+    }
+
+    .swal2-custom-select {
+      block-size: 40px;
+      /* Adjust as needed */
+    }
+
+    .popup {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: white;
+      padding: 20px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      z-index: 1000;
+    }
+
+    .popup .close-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      cursor: pointer;
+    }
+
+    .popup-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 999;
+    }
+
+    /* Adjust the width and padding of the SweetAlert container */
+    .swal-wide {
+      width: 550px !important;
+    }
+
+    .pop-card {
+      position: relative;
+      /* transition: transform 0.3s ease, box-shadow 0.3s ease, z-index 0.3s ease; */
+      transition: transform 1s ease;
+      transform-origin: center;
+      z-index: 1;
+    }
+
+    .pop-card:hover {
+      transition-delay: 2s;
+      transform: scale(1.3);
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container mx-auto relative" id="solutions">
+    <!-- Separator -->
+    <div class="separator">
+      <span class="text-gray-500">Business Goals In Focus</span>
+    </div>
+    <!-- Top Section -->
+    <div class="grid grid-cols-4 gap-4 mb-1" id="topSection">
+      <div class="col-span-2 bg-gray-200 p-4 rounded-lg shadow mb-2">
+        <div class="text-xl font-bold mb-2">Essential</div>
+        <div class="grid grid-cols-2 gap-4 dropzone" id="essential"></div>
+      </div>
+      <div id="advanced" class="dropzone bg-blue-200 p-4 rounded-lg shadow mb-2">
+        <div class="text-xl font-bold mb-2">Advanced</div>
+      </div>
+      <div id="excellence" class="dropzone bg-green-600 p-4 rounded-lg shadow mb-2">
+        <div class="text-xl font-bold mb-2 text-white">Excellence</div>
+      </div>
+    </div>
+    <div class="grid grid-cols-6 gap-4 content-center mb-2">
+      <div></div>
+      <div></div>
+      <button id="addSolutionButton" class="bg-gray-400 text-white p-2 rounded-lg" onclick="createNewSolution()">
+        <i class="fa fa-plus"></i> New Solution
+      </button>
+      <button id="saveButton" class="bg-blue-500 text-white px-4 py-2 rounded-lg">
+        Save And Close
+      </button>
+      <div></div>
+      <div class="flex items-center justify-end">
+        <span class="mr-2 text-sm font-medium text-gray-700">Show Progress</span>
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" value="" id="toggleIconsCheckbox" class="sr-only peer" checked="">
+          <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+        </label>
+      </div>
+    </div>
+    <!-- Separator -->
+    <div class="separator">
+      <span class="text-gray-500">Other Business Goals</span>
+    </div>
+    <!-- Bottom Section -->
+    <div class="grid grid-cols-4 gap-4 bg-gray-400 p-4 rounded-lg shadow" id="bottomSection">
+      <div class="col-span-2 bg-gray-100 p-4 rounded-lg shadow">
+        <div class="text-xl font-bold mb-2">Essential</div>
+        <div class="grid grid-cols-2 gap-4" id="bottomEssential"></div>
+      </div>
+      <div id="bottomAdvanced" class="dropzone bg-blue-100 p-4 rounded-lg shadow">
+        <div class="text-xl font-bold mb-2">Advanced</div>
+      </div>
+      <div id="bottomExcellence" class="dropzone bg-green-400 p-4 rounded-lg shadow">
+        <div class="text-xl font-bold mb-2 text-white">Excellence</div>
+      </div>
+    </div>
+  </div>
+  <div class="max-w-7xl mx-auto hidden" id="recommendations">
+    <div class="flex justify-between items-center mb-4">
+      <h1 class="text-center text-2xl font-medium">
+        <span id="solutionName"></span>: Review Recommendations and Best Practices
+      </h1>
+      <button class="bg-blue-700 text-white py-2 px-4 rounded" id="backToSolution" onclick="backToSolutions()">
+                Save And Go Back to Solutions
+            </button>
+    </div>
+
+    <div id="recommendations-container" class="grid grid-cols-1 gap-4"></div>
+
+    <div class="flex justify-between mt-4">
+      <div>
+        <div class="flex items-center space-x-2">
+          <div class="bg-gray-200 w-4 h-4"></div>
+          <span>CSM or Customer Input</span>
+        </div>
+        <div class="flex items-center space-x-2 mt-2">
+          <div class="bg-blue-100 w-4 h-4"></div>
+          <span>Product Data</span>
+        </div>
+      </div>
+      <div class="flex space-x-4"></div>
+    </div>
+  </div>
+  <div id="overlay" class="overlay">
+    <div class="spinner"></div>
+  </div>
+  <script>
+      let exCorePillar = '<?= exCorePillar ?>';
+      let data = JSON.parse(<?= JSON.stringify(data) ?>);
+      let platform = '<?= platform ?>';
+
+      let solutions = data.solutions.filter(
+        (solution) => solution.exCorePillar == exCorePillar
+      );
+
+      document.addEventListener("DOMContentLoaded", async () => {
+        showSolutionScreen();
+
+        const toggleCheckbox = document.getElementById("toggleIconsCheckbox");
+        const icons = document.querySelectorAll(".material-symbols-rounded");
+
+        toggleCheckbox.addEventListener("change", function () {
+          icons.forEach((icon) => {
+            icon.classList.toggle("hidden");
+          });
+        });
+      });
+
+      function showSolutionScreen() {
+        solutions.forEach((solution) => appendSolutionToPage(solution));
+      }
+
+      function appendSolutionToPage(solution) {
+        let { select, category, title, description, importance, recos } =
+          solution;
+
+        let rootElem = document.querySelector(
+          "#" +
+            (select
+              ? importance.toLowerCase()
+              : "bottom" + capitalizeFirstChar(importance))
+        );
+
+        // Create the item container
+        let item = document.createElement("div");
+        item.className =
+          "bg-white p-2 rounded-lg shadow mb-2 draggable pop-card relative  z-0";
+        item.setAttribute("data-category", importance.toLowerCase());
+        item.setAttribute("data-included", select);
+
+        // Create the title and icon container
+        let titleIconContainer = document.createElement("div");
+        titleIconContainer.className =
+          "font-semibold mb-1 flex justify-between items-center";
+
+        // Create the title span
+        let titleSpan = document.createElement("span");
+        titleSpan.className = "title text-lg";
+        titleSpan.textContent = title;
+
+        // Create the icon container
+        let iconContainer = document.createElement("div");
+        iconContainer.className = "flex gap- items-center";
+
+        let signalContainer = document.createElement("div");
+        let signalSpan = document.createElement("span");
+        signalSpan.className =
+          "material-symbols-rounded text-gray-900 scale-150";
+
+        updateSignal(signalSpan, recos);
+
+        // Create the icon span
+        let iconSpan = document.createElement("span");
+        iconSpan.className =
+          "absolute top-0 right-0 w-6 h-6 rounded-full flex items-center justify-center text-white hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transform translate-x-1/2 -translate-y-1/2 z-50 bg-gradient-to-br shadow-md transition-all duration-200 ease-in-out hover:-translate-y-[calc(50%+2px)] active:translate-y-[calc(-50%-1px)] icon  focus:ring-gray-400 from-gray-400 to-gray-400";
+        if (select) {
+          // iconSpan.classList.add('focus:ring-red-500','from-red-400','to-red-600')
+          iconSpan.textContent = "-";
+        } else {
+          // iconSpan.classList.add('focus:ring-green-500','from-green-400','to-green-600')
+          iconSpan.textContent = "+";
+        }
+        iconSpan.onclick = function (event) {
+          event.stopPropagation();
+          (select ? moveToBottom : moveToTop)(iconSpan, solution);
+        };
+
+        // Append bars and icon to the icon container
+        iconContainer.appendChild(iconSpan);
+        signalContainer.appendChild(signalSpan);
+
+        // Append title and icon container to the titleIconContainer
+        let divElem = document.createElement("div");
+        divElem.classList = "flex gap-2";
+        divElem.appendChild(signalContainer);
+        divElem.appendChild(iconContainer);
+        titleIconContainer.appendChild(titleSpan);
+        titleIconContainer.appendChild(divElem);
+        // titleIconContainer.appendChild(iconSpan);
+
+        // Create the description div
+        let descriptionDiv = document.createElement("div");
+        descriptionDiv.className = "description text-sm mb-1";
+        descriptionDiv.textContent = description;
+
+        let selectedCountSpan = document.createElement("span");
+        selectedCountSpan.className = "selected-count text-sm";
+        selectedCountSpan.style.display = select ? "block" : "none";
+
+        updateSelectedCount(selectedCountSpan, recos);
+
+        // Append titleIconContainer and description to the item
+        item.appendChild(titleIconContainer);
+        item.appendChild(descriptionDiv);
+        item.appendChild(selectedCountSpan);
+
+        item.onclick = function (event) {
+          if (!event.target.classList.contains("icon")) {
+            showRecommendationScreen(solution, selectedCountSpan, signalSpan);
+          }
+        };
+
+        // Append the item to the root element
+        rootElem.appendChild(item);
+      }
+
+      function moveToTop(element, solution) {
+        const item =
+          element.parentElement.parentElement.parentElement.parentElement;
+        solution.select = true;
+        const category = item.getAttribute("data-category");
+        item.setAttribute("data-included", "true");
+        document.getElementById(category).appendChild(item);
+        element.textContent = "-";
+        // element.classList.add('focus:ring-red-500','from-red-400','to-red-600')
+        // element.classList.remove('focus:ring-green-500','from-green-400','to-green-600')
+        element.onclick = () => moveToBottom(element, solution);
+      }
+
+      function moveToBottom(element, solution) {
+        const item =
+          element.parentElement.parentElement.parentElement.parentElement;
+        solution.select = false;
+        const category =
+          "bottom" +
+          item.getAttribute("data-category").charAt(0).toUpperCase() +
+          item.getAttribute("data-category").slice(1);
+        item.setAttribute("data-included", "false");
+        document.getElementById(category).appendChild(item);
+        element.textContent = "+";
+
+        // element.classList.remove('focus:ring-red-500','from-red-400','to-red-600')
+        // element.classList.add('focus:ring-green-500','from-green-400','to-green-600')
+        element.onclick = () => moveToTop(element, solution);
+      }
+
+      document.getElementById("saveButton").addEventListener("click", () => {
+        const overlay = document.getElementById("overlay");
+        overlay.classList.add("active");
+        google.script.run
+          .withSuccessHandler((val) => {
+            overlay.classList.remove("active");
+            google.script.host.close();
+          })
+          .withFailureHandler((e) => {
+            overlay.classList.remove("active");
+            Swal.fire({
+              title: "Error",
+              text: `An error occurred: ${e}`,
+              icon: "error",
+              confirmButtonText: "OK",
+            });
+          })
+          .saveSolutions(data, exCorePillar);
+      });
+
+      function capitalizeFirstChar(string) {
+        return string.charAt(0).toUpperCase() + string.slice(1);
+      }
+
+      function showRecoScreenGrid(solution, selectedCountSpan, signalSpan) {
+        let { title, importance, recos } = solution;
+        document.querySelector("#solutionName").textContent = title;
+
+        const container = document.querySelector("#recommendations-container");
+        container.innerHTML = ""; // Clear any previous recommendations
+
+        recos.forEach((recommendation, index) => {
+          const recommendationDiv = document.createElement("div");
+          recommendationDiv.classList.add(
+            recommendation.csmOrProductData == "CSM"
+              ? "bg-gray-200"
+              : "bg-blue-100",
+            "p-2",
+            "rounded-lg",
+            "shadow-md",
+            "mb-2",
+            "relative",
+            "flex",
+            "flex-col",
+            "pop-card"
+          );
+
+          const titleHdr = document.createElement("h3");
+          titleHdr.classList.add("text-md", "font-semibold");
+          titleHdr.textContent = recommendation.title;
+          recommendationDiv.appendChild(titleHdr);
+
+          const urlsDiv = document.createElement("div");
+          urlsDiv.classList.add(
+            "absolute",
+            "top-2",
+            "right-2",
+            "flex",
+            "space-x-2"
+          );
+          if(recommendation.helpUrls.length>0){
+            const helpIcon = document.createElement("button");
+            helpIcon.title = 'Knowledge Base Articles'
+            helpIcon.classList.add("text-gray-500", "right-2");
+            helpIcon.innerHTML = `<i class="fas fa-question-circle"></i>`;
+            helpIcon.addEventListener("click", () =>
+              showUrlPopUp(recommendation.helpUrls, recommendation.title, "Help")
+            );
+
+            urlsDiv.appendChild(helpIcon);
+          }
+
+
+          if(recommendation.bestPractices.length>0){
+            const achievementButton = document.createElement("button");
+            achievementButton.title = 'Best Practices'
+            achievementButton.classList.add("text-gray-500");
+            achievementButton.innerHTML = `<i class="fas fa-award"></i>`;
+            achievementButton.addEventListener("click", () =>
+              showUrlPopUp(
+                recommendation.bestPractices,
+                recommendation.title,
+                "Best Practices"
+              )
+            )
+            urlsDiv.appendChild(achievementButton);
+          }
+          recommendationDiv.appendChild(urlsDiv);
+
+          const textP = document.createElement("p");
+          textP.classList.add("mb-4", "pr-8"); // Add padding to the right to avoid overlap
+          textP.textContent = recommendation.description;
+          recommendationDiv.appendChild(textP);
+
+          const buttonsDiv = document.createElement("div");
+          buttonsDiv.classList.add("mt-auto", "flex", "justify-between");
+
+          const iconsDiv = document.createElement("div");
+          iconsDiv.classList.add("flex", "space-x-2");
+
+          [
+            { icon: "ban", color: "#b90404", value: "", tip: "Not Relavant" },
+            {
+              icon: "times",
+              color: "#f47b7b",
+              value: 0,
+              tip: "Not Yet Adopted",
+            },
+            { icon: "check", color: "#5bc73d", value: 1, tip: "Good Adoption" },
+            {
+              icon: "check-double",
+              color: "#00bd0d",
+              value: 2,
+              tip: "Excellent Adoption",
+            },
+          ].forEach(({ icon, color, value, tip }) => {
+            const button = document.createElement("button");
+            button.classList.add(
+              "text-gray-500",
+              "icon-button",
+              `icon-button-${index}`,
+              "rounded-full",
+              "p-2"
+            );
+            button.title = tip;
+            button.innerHTML = `<i class="fa-solid fa-${icon}" style="color: ${color};"></i>`;
+            button.addEventListener("click", (event) => {
+              toggleIcon(event, index, value);
+              recommendation.reaction = value;
+
+              updateSignal(signalSpan, recos);
+            });
+
+            if (recommendation.reaction === value) iconInitiation(button);
+            iconsDiv.appendChild(button);
+          });
+
+          buttonsDiv.appendChild(iconsDiv);
+
+          const actionsDiv = document.createElement("div");
+          actionsDiv.classList.add("flex", "space-x-2");
+
+          const noteButton = document.createElement("button");
+          noteButton.classList.add("text-gray-500");
+          noteButton.innerHTML = `<i class="fas fa-sticky-note"></i>`;
+          noteButton.addEventListener("click", () =>
+            showNotePopup(recommendation)
+          );
+          actionsDiv.appendChild(noteButton);
+
+          const addButton = document.createElement("button");
+          addButton.classList.add(
+            "bg-gray-300",
+            "text-gray-800",
+            "py-1",
+            "px-2",
+            "rounded"
+          );
+          addButton.textContent = "Add to Success Plan";
+          addButton.addEventListener("click", () => {
+            addToSuccessPlan(addButton, recommendation);
+            updateSignal(signalSpan, recos);
+            updateSelectedCount(selectedCountSpan, recos);
+          });
+
+          actionsDiv.appendChild(addButton);
+
+          handleSuccessPlanButtonInitiation(addButton, recommendation); //call to set the color
+
+          buttonsDiv.appendChild(actionsDiv);
+          recommendationDiv.appendChild(buttonsDiv);
+          container.appendChild(recommendationDiv);
+        });
+
+        // Add the button to add a new recommendation
+        const addNewButton = document.createElement("button");
+        addNewButton.classList.add(
+          "text-gray-500",
+          "bg-blue-100",
+          "p-2",
+          "rounded-full",
+          "flex",
+          "justify-center",
+          "items-center",
+          "mb-2"
+        );
+        addNewButton.innerHTML = `<i class="fa-solid fa-plus text-2xl"></i>`;
+        addNewButton.addEventListener("click", () =>
+          addNewRecommendation(solution, selectedCountSpan, signalSpan)
+        );
+
+        container.appendChild(addNewButton);
+
+        document.querySelector("#solutions").classList.add("hidden");
+        document.querySelector("#recommendations").classList.remove("hidden");
+      }
+
+      function showRecommendationScreen(
+        solution,
+        selectedCountSpan,
+        signalSpan
+      ) {
+        let { title, importance, recos } = solution;
+        document.querySelector("#solutionName").textContent = title;
+
+        const container = document.querySelector("#recommendations-container");
+        container.innerHTML = ""; // Clear any previous recommendations
+
+        recos.forEach((recommendation, index) => {
+          const recommendationDiv = document.createElement("div");
+
+          recommendationDiv.classList.add(
+            recommendation.csmOrProductData == "CSM"
+              ? "bg-gray-200"
+              : "bg-blue-100",
+            "p-2",
+            "rounded-lg",
+            "shadow-md",
+            "mb-2",
+            "relative",
+            "flex",
+            "flex-row"
+          );
+
+          // Create left section
+          const leftSection = document.createElement("div");
+          leftSection.classList.add("flex", "flex-col", "w-10/12", "pr-2");
+
+          // Create header section for title and icons
+          const headerSection = document.createElement("div");
+          headerSection.classList.add("flex", "justify-between", "items-start");
+
+          // Create title
+          const titleHdr = document.createElement("h3");
+          titleHdr.classList.add("text-md", "font-semibold");
+          titleHdr.textContent = recommendation.title;
+          recommendationDiv.appendChild(titleHdr);
+
+          // Create icon container
+          const urlsDiv = document.createElement("div");
+          urlsDiv.classList.add("flex", "space-x-2");
+
+          // Create question circle button
+          if(recommendation.helpUrls.length>0){
+            const helpIcon = document.createElement("button");
+            helpIcon.title = 'Knowledge Base Articles'
+            helpIcon.classList.add("text-gray-500");
+            helpIcon.innerHTML = `<i class="fas fa-question-circle"></i>`;
+            helpIcon.addEventListener("click", () =>
+              showUrlPopUp(recommendation.helpUrls, recommendation.title, "Help")
+            );
+            urlsDiv.appendChild(helpIcon);
+          }
+
+
+          if(recommendation.bestPractices.length>0){
+            // Create award button
+            const awardButton = document.createElement("button");
+            awardButton.title = 'Best Practices'
+            awardButton.classList.add("text-gray-500");
+            awardButton.innerHTML = `<i class="fas fa-award"></i>`;
+            awardButton.addEventListener("click", () =>
+              showUrlPopUp(
+                recommendation.bestPractices,
+                recommendation.title,
+                "Best Practices"
+              )
+            );
+            urlsDiv.appendChild(awardButton);
+          }
+
+          // Append title and icon container to header section
+          headerSection.appendChild(titleHdr);
+          headerSection.appendChild(urlsDiv);
+
+          // Create description
+          const description = document.createElement("p");
+          description.classList.add("mb-4", "pr-8");
+          description.textContent = recommendation.description;
+
+          // Append header section and description to left section
+          leftSection.appendChild(headerSection);
+          leftSection.appendChild(description);
+
+          // Create vertical separator
+          const separator = document.createElement("div");
+          separator.classList.add("border-l", "border-gray-400", "mx-2");
+
+          // Create right section
+          const rightSection = document.createElement("div");
+          rightSection.classList.add(
+            "flex",
+            "flex-col",
+            "w-2/12",
+            "pl-2",
+            "justify-between"
+          );
+
+          // Create icons container
+          const iconsContainer = document.createElement("div");
+          iconsContainer.classList.add(
+            "flex",
+            "justify-center",
+            "space-x-2",
+            "mb-2"
+          );
+
+          [
+            { icon: "signal_cellular_nodata", color: "#b90404", value: "", tip: "Not Relavant" },
+            {
+              icon: "signal_cellular_0_bar",
+              color: "#f47b7b",
+              value: 0,
+              tip: "Not Yet Adopted",
+            },
+            { icon: "signal_cellular_3_bar", color: "#5bc73d", value: 1, tip: "Good Adoption" },
+            {
+              icon: "signal_cellular_4_bar",
+              color: "#00bd0d",
+              value: 2,
+              tip: "Excellent Adoption",
+            },
+          ].forEach(({ icon, color, value, tip }) => {
+            const button = document.createElement("button");
+            button.classList.add(
+              "text-gray-500",
+              "icon-button",
+              `icon-button-${index}`,
+              "rounded-full",
+              "p-2"
+            );
+            button.title = tip;
+            button.innerHTML = `<span class="material-symbols-rounded text-gray-900 scale-150">${icon}</span>`//`<i class="fa-solid fa-${icon}" style="color: ${color};"></i>`;
+            button.addEventListener("click", (event) => {
+              toggleIcon(event, index, value);
+              recommendation.reaction = value;
+              updateSignal(signalSpan, recos);
+            });
+            if (recommendation.reaction === value) iconInitiation(button);
+            iconsContainer.appendChild(button);
+          });
+
+          // Create buttons container
+          const buttonsContainer = document.createElement("div");
+          buttonsContainer.classList.add("flex", "space-x-2", "mt-2");
+
+          // Create note button
+          const noteButton = document.createElement("button");
+          noteButton.classList.add("text-gray-500");
+          noteButton.innerHTML = `<i class="fas fa-sticky-note"></i>`;
+          noteButton.addEventListener("click", () =>
+            showNotePopup(recommendation)
+          );
+
+          // Create add to success plan button
+          const successButton = document.createElement("button");
+          successButton.classList.add(
+            "bg-gray-300",
+            "text-gray-800",
+            "py-1",
+            "px-2",
+            "rounded"
+          );
+          successButton.textContent = "Add to Success Plan";
+          successButton.addEventListener("click", () => {
+            addToSuccessPlan(successButton, recommendation);
+            updateSignal(signalSpan, recos);
+            updateSelectedCount(selectedCountSpan, recos);
+          });
+          handleSuccessPlanButtonInitiation(successButton, recommendation);
+
+          // Append note and success buttons to buttons container
+          buttonsContainer.appendChild(noteButton);
+          buttonsContainer.appendChild(successButton);
+
+          // Append icons container and buttons container to right section
+          rightSection.appendChild(iconsContainer);
+          rightSection.appendChild(buttonsContainer);
+
+          // Append left section, separator, and right section to main container
+          recommendationDiv.appendChild(leftSection);
+          recommendationDiv.appendChild(separator);
+          recommendationDiv.appendChild(rightSection);
+
+          // Append the container to the body or a specific element in the document
+          container.appendChild(recommendationDiv);
+        });
+
+        // Add the button to add a new recommendation
+        const addNewButton = document.createElement("button");
+        addNewButton.classList.add(
+          "text-gray-500",
+          "bg-blue-100",
+          "p-2",
+          "rounded-full",
+          "flex",
+          "justify-center",
+          "items-center",
+          "mb-2"
+        );
+        addNewButton.innerHTML = `<i class="fa-solid fa-plus text-2xl"></i>`;
+        addNewButton.addEventListener("click", () =>
+          addNewRecommendation(solution, selectedCountSpan, signalSpan)
+        );
+
+        container.appendChild(addNewButton);
+
+        document.querySelector("#solutions").classList.add("hidden");
+        document.querySelector("#recommendations").classList.remove("hidden");
+      }
+
+      function toggleIcon(event, index, value) {
+        const iconButtons = document.querySelectorAll(`.icon-button-${index}`);
+        iconButtons.forEach((button) =>
+          button.classList.remove("bg-emerald-400")
+        );
+        event.currentTarget.classList.add("bg-emerald-400");
+      }
+
+      function iconInitiation(icon) {
+        icon.classList.add("bg-emerald-400");
+      }
+
+      function addToSuccessPlan(button, recommendation) {
+        if (!recommendation.addToSuccessPlan) {
+          //if off, turn on
+          button.classList.remove("bg-gray-300");
+          button.classList.add("bg-green-500");
+          button.classList.add("text-white");
+        } else {
+          //if on turn off
+          button.classList.add("bg-gray-300");
+          button.classList.remove("bg-green-500");
+          button.classList.remove("text-white");
+        }
+
+        recommendation.addToSuccessPlan = !recommendation.addToSuccessPlan;
+      }
+
+      function calculateAverageReaction(recommendations) {
+        let total = 0;
+        let count = 0;
+        recommendations.forEach((recommendation) => {
+          if (
+            recommendation.reaction !== null &&
+            recommendation.reaction !== undefined &&
+            recommendation.reaction !== ""
+          ) {
+            total += recommendation.reaction;
+            count++;
+          }
+        });
+
+        return count === 0 ? null : total / count;
+      }
+
+      function handleSuccessPlanButtonInitiation(button, recommendation) {
+        if (recommendation.addToSuccessPlan) {
+          button.classList.remove("bg-gray-300");
+          button.classList.add("bg-green-500");
+          button.classList.add("text-white");
+        }
+      }
+
+      function showNotePopup(recommendation) {
+        Swal.fire({
+          title: `<span class="text-xl font-semibold">Enter your note for ${recommendation.title}</span>`,
+          input: "textarea",
+          inputValue: recommendation.note,
+          inputPlaceholder: "Type your note here...",
+          showCancelButton: true,
+          customClass: "swal-wide",
+          inputValidator: (value) => {
+            if (!value) {
+              return "You need to write something!";
+            }
+          },
+        }).then((result) => {
+          if (result.isConfirmed) {
+            recommendation.note = result.value;
+          }
+        });
+      }
+
+      function updateSignal(signalSpan, recommendations) {
+        const average = calculateAverageReaction(recommendations);
+        if (average !== null) {
+          const barsNeeded = Math.min(Math.ceil(average / 0.4), 4);
+          signalSpan.textContent = `signal_cellular_${barsNeeded}_bar`;
+        } else {
+          signalSpan.textContent = `signal_cellular_nodata`;
+        }
+      }
+
+      function updateSelectedCount(element, recommendations) {
+        let count = recommendations.filter(
+          (row) => row.addToSuccessPlan
+        ).length;
+
+        if (count === 0) {
+          element.style.display = "none";
+        } else {
+          element.style.display = "block";
+          element.textContent = `${count} selected`;
+        }
+      }
+
+      function showUrlPopUp(urls, recoName, type) {
+        let contentHtml = "<ul>";
+        let platformUrls = urls.filter((url) => url.platform == platform);
+        if (platformUrls.length > 0) {
+          platformUrls.forEach(({ url, title, platform }) => {
+            let cleanurl = url.startsWith("http") ? url : "http://" + url;
+            contentHtml += `<li><a class="text-blue-500 underline" href="${cleanurl}" target="_blank">${title}</a></li>`;
+          });
+          contentHtml += "</ul>";
+
+          Swal.fire({
+            title: `<span class="text-xl font-semibold">${type} URLs for ${recoName}</span>`,
+            html: contentHtml,
+            showCloseButton: true,
+            focusConfirm: false,
+            confirmButtonText: "Close",
+            customClass: "swal-wide",
+          });
+        } else {
+          Swal.fire({
+            title: "Currently Not Available",
+            text: `Sorry, we do not have any ${type.toLowerCase()} documents for this topic. We are working on adding more resources every week.`, //`${type} URLs for "${recoName}" is not available yet`,
+            icon: "info",
+            confirmButtonText: "OK",
+          });
+        }
+      }
+
+      function backToSolutions() {
+        document.querySelector("#solutions").classList.remove("hidden");
+        document.querySelector("#recommendations").classList.add("hidden");
+      }
+
+      function addNewRecommendation(solution, selectedCountSpan, signalSpan) {
+        Swal.fire({
+          title: "Add New Recommendation:",
+          html: `
+                        <div style="display: flex; flex-direction: column;">
+                            <input id="swal-input1" class="swal2-input" placeholder="Title" style="margin-block-end: 8px;">
+                            <textarea id="swal-input2" class="swal2-textarea" placeholder="Description" style="margin-block-end: 8px;"></textarea>
+                            <select id="swal-input3" class="swal2-select" style="margin-block-end: 8px;">
+                                <option value="CSM" selected>CSM</option>
+                                <option value="Product Data">Product Data</option>
+                            </select>
+                        </div>
+                    `,
+          customClass: {
+            container: "swal2-custom-container",
+            input: "swal2-custom-input",
+            textarea: "swal2-custom-textarea",
+            select: "swal2-custom-select",
+          },
+          focusConfirm: false,
+          preConfirm: () => {
+            const title = Swal.getPopup().querySelector("#swal-input1").value;
+            const description =
+              Swal.getPopup().querySelector("#swal-input2").value;
+            const type = Swal.getPopup().querySelector("#swal-input3").value;
+            if (!title || !description || !type) {
+              Swal.showValidationMessage("Please fill in all fields");
+            }
+            return { title, description, type };
+          },
+        }).then((result) => {
+          if (result.isConfirmed) {
+            const { title, description, type } = result.value;
+            let key = generateNewKey("reco_");
+            if (description) {
+              const newRecommendation = {
+                key: key,
+                title: title,
+                description: description,
+                linkToSolution: solution.key,
+                csmOrProductData: type, // Assuming new recommendations are customer inputs
+                reaction: "",
+                manual: true,
+              };
+
+              solution.recos.push(newRecommendation);
+              showRecommendationScreen(solution, selectedCountSpan, signalSpan); // Refresh the recommendations list
+            }
+          }
+        });
+      }
+
+      function createNewSolution() {
+        Swal.fire({
+          title: "Add New Solution",
+          html: `
+                        <div style="display: flex; flex-direction: column;">
+                            <input id="swal-input1" class="swal2-input" placeholder="Title" style="margin-block-end: 8px;">
+                            <textarea id="swal-input2" class="swal2-textarea" placeholder="Description" style="margin-block-end: 8px;"></textarea>
+                            <select id="swal-input3" class="swal2-select" style="margin-block-end: 8px;">
+                                <option value="Essential">Essential</option>
+                                <option value="Advanced">Advanced</option>
+                                <option value="Excellence">Excellence</option>
+                            </select>
+                        </div>
+                    `,
+          customClass: {
+            container: "swal2-custom-container",
+            input: "swal2-custom-input",
+            textarea: "swal2-custom-textarea",
+            select: "swal2-custom-select",
+          },
+          focusConfirm: false,
+          preConfirm: () => {
+            const title = Swal.getPopup().querySelector("#swal-input1").value;
+            const description =
+              Swal.getPopup().querySelector("#swal-input2").value;
+            const importance =
+              Swal.getPopup().querySelector("#swal-input3").value;
+            if (!title || !description || !importance) {
+              Swal.showValidationMessage("Please fill in all fields");
+            }
+            return { title, description, importance };
+          },
+        }).then((result) => {
+          if (result.isConfirmed) {
+            const { title, description, importance } = result.value;
+            addNewSolution(title, description, importance);
+          }
+        });
+      }
+
+      function addNewSolution(title, description, importance) {
+        const sectionId = importance.toLowerCase();
+        const section = document.getElementById(sectionId);
+        let key = generateNewKey("sol_");
+
+        let solution = {
+          key: key,
+          title: title,
+          description: description,
+          exCorePillar: exCorePillar,
+          importance: importance,
+          select: true,
+          manual: true,
+          recos: [],
+        };
+        data.solutions.push(solution);
+
+        appendSolutionToPage(solution);
+      }
+
+      function generateNewKey(prefix) {
+        const base64Chars =
+          "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+        const now = new Date().getTime();
+        let uniqueNumber = "";
+        let randomComponent = Math.floor(Math.random() * 64);
+
+        let temp = now;
+        for (let i = 0; i < 5; i++) {
+          uniqueNumber += base64Chars.charAt(temp % 64);
+          temp = Math.floor(temp / 64);
+        }
+        uniqueNumber += base64Chars.charAt(randomComponent);
+
+        return prefix + uniqueNumber;
+      }
+    </script>
+</body>
+
+</html>

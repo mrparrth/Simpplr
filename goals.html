@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Effective Communication KPIs</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      justify-content: center;
+      align-items: flex-start;
+      height: 100vh;
+      /* background-color: #f3f4f6; */
+      flex-direction: column;
+    }
+
+    .content-container {
+      flex-direction: column;
+      align-items: center;
+      background-color: #ffffff;
+      border-radius: 8px;
+      /* box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); */
+      position: relative;
+    }
+
+    .floating-button {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+    }
+
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgb(231 242 233 / 50%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s, visibility 0.3s;
+    }
+
+    .overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .spinner {
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      border-top-color: #368b2c;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .hide-arrow[type="number"]::-webkit-inner-spin-button,
+    .hide-arrow[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="content-container">
+    <div class="flex justify-center">
+      <button id="saveCloseBtn" class="bg-blue-500 text-white py-1 px-20 rounded mb-2">Save & Close</button>
+    </div>
+    <div class="overflow-y-auto max-h-99">
+      <div class="grid grid-cols-12 font-semibold border-b mb-2 pb-1">
+        <div class="col-span-1"></div>
+        <div class="col-span-4">Metrics</div>
+        <div class="col-span-2 text-center">Last 30 Days</div>
+        <div class="col-span-2 text-center">(+/-) Benchmark</div>
+        <div class="col-span-2 text-center">Goal</div>
+        <div class="col-span-1 text-center"></div>
+      </div>
+      <div class="space-y-2" id='goalsContainer'>
+
+      </div>
+    </div>
+  </div>
+  <div id="overlay" class="overlay">
+    <div class="spinner"></div>
+  </div>
+</body>
+<script>
+  let exCorePillar = '<?= exCorePillar ?>';
+  let data = JSON.parse(<?= JSON.stringify(data) ?>);
+  let goals = data.goals.filter(goal=>goal.exCorePillar==exCorePillar)
+  
+  const updateGoalTarget = (key, value) => {
+    const goal = data.goals.find(goal => goal.key === key);
+    if (goal) {
+      goal.target = goal.type === '%' ? Number(value) / 100 : Number(value);
+      goal.targetFormatted = value + (goal.type=='%'?'%':'')
+    }
+  };
+
+  const updateGoalSelect = (key,value) => {
+    const goal = data.goals.find(goal => goal.key === key);
+    if(goal){
+      goal.select = value
+      console.log(`Updated goal: ${JSON.stringify(goal)}`);
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    const goalsContainer = document.getElementById('goalsContainer');
+    goalsContainer.innerHTML = ''
+
+    goals.forEach(goalRow=>{
+      // Create a new div element for the goal row
+      const goalRowDiv = document.createElement('div');
+      goalRowDiv.className = 'grid grid-cols-12 items-center';
+
+      // Create checkbox input
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.className = 'form-checkbox h-5 w-5 text-indigo-600 col-span-1 mr-2';
+      checkbox.dataset.key = goalRow.key;
+      checkbox.checked = goalRow.select;
+
+      checkbox.addEventListener('change', (e) => {
+        updateGoalSelect(e.target.dataset.key, e.target.checked);
+      });
+
+      // Create goal description div
+      const descriptionDiv = document.createElement('div');
+      descriptionDiv.className = 'col-span-4';
+      descriptionDiv.textContent = goalRow.title;
+
+      // Create last 30 days formatted div
+      const last30DaysDiv = document.createElement('div');
+      last30DaysDiv.className = 'col-span-2 text-center';
+      last30DaysDiv.textContent = goalRow.last30DaysFormatted;
+
+      // Create +/− formatted div
+      const plusMinusDiv = document.createElement('div');
+      plusMinusDiv.className = 'col-span-2 text-center text-blue-600';
+      plusMinusDiv.textContent = goalRow['+/-'];
+
+      // Create target input
+      const targetInputDiv = document.createElement('div');
+      targetInputDiv.className = 'col-span-2 flex items-center justify-center';
+    
+      const targetInput = document.createElement('input');
+      targetInput.type = 'number';
+      targetInput.className = 'goal-input text-center border rounded-md p-1 w-full hide-arrow';
+
+      targetValue = goalRow.type === '%' && goalRow.target ? goalRow.target * 100 : goalRow.target
+      try{
+        console.log(targetValue)
+        targetInput.value = targetValue? +(targetValue).toFixed(2) :targetValue;
+      }catch(e){
+        targetInput.value = targetValue
+      }
+      
+      targetInput.dataset.key = goalRow.key;
+      targetInput.addEventListener('input', (e) => {
+        updateGoalTarget(e.target.dataset.key, e.target.value, goalRow.type);
+      });
+
+      targetInput.setAttribute('valuetype', goalRow.type);
+      
+      targetInputDiv.appendChild(targetInput);
+
+      // Create percentage span
+      const percentageDiv = document.createElement('div');
+      percentageDiv.className = 'col-span-1 flex items-left justify-left';
+
+      const percentageSpan = document.createElement('span');
+      percentageSpan.className = 'ml-1 text-xs italic text-gray-500';
+      percentageSpan.textContent = goalRow.type === '%' ? '%' : ' ';
+
+      percentageDiv.appendChild(percentageSpan);
+
+      // Append elements to the goalRowDiv
+      goalRowDiv.appendChild(checkbox);
+      goalRowDiv.appendChild(descriptionDiv);
+      goalRowDiv.appendChild(last30DaysDiv);
+      goalRowDiv.appendChild(plusMinusDiv);
+      goalRowDiv.appendChild(targetInputDiv);
+      goalRowDiv.appendChild(percentageDiv);
+
+      // Append the goalRowDiv to the container
+      goalsContainer.appendChild(goalRowDiv);
+    })
+  })
+
+  document.getElementById('saveCloseBtn').addEventListener('click', function() {
+    const overlay = document.getElementById('overlay');
+    overlay.classList.add('active');
+
+    console.log(data)
+    google.script.run
+      .withSuccessHandler(val => {
+        console.log(val)
+        google.script.host.close()
+      })
+      .withFailureHandler(e => {
+        console.error('Error occured ' + e)
+      })
+      .saveDbData(data)
+  });
+</script>
+
+</html>
